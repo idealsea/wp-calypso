@@ -10,6 +10,7 @@ import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { isEnabled } from 'config';
 import { filter, get } from 'lodash';
+import debugFactory from 'debug';
 
 /**
  * Internal dependencies
@@ -37,6 +38,8 @@ import { getSelectedSite, getSelectedSiteSlug } from 'state/ui/selectors';
 import Main from 'components/main';
 import HeaderCake from 'components/header-cake';
 import Placeholder from 'my-sites/site-settings/placeholder';
+
+const debug = debugFactory( 'calypso:section-import' );
 
 /**
  * Configuration for each of the importers to be rendered in this section. If
@@ -85,7 +88,11 @@ class SiteSettingsImport extends Component {
 	state = getImporterState();
 
 	componentDidMount() {
+		const { fromSite } = this.props;
+
 		ImporterStore.on( 'change', this.updateState );
+		debug( { fromSite } );
+		// @TODO if fromSite & not importing... dispatch event to kick off an import
 		this.updateFromAPI();
 	}
 
