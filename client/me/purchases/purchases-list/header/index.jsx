@@ -13,7 +13,7 @@ import i18n from 'i18n-calypso';
  */
 import NavItem from 'components/section-nav/item';
 import NavTabs from 'components/section-nav/tabs';
-import { billingHistory, purchasesRoot } from '../../paths.js';
+import { billingHistory, purchasesRoot, pendingPurchases } from '../../paths.js';
 import SectionNav from 'components/section-nav';
 import config from 'config';
 
@@ -33,6 +33,10 @@ const PurchasesHeader = ( { section } ) => {
 
 				<NavItem path={ billingHistory } selected={ section === 'billing' }>
 					{ i18n.translate( 'Billing History' ) }
+				</NavItem>
+
+				<NavItem path={ pendingPurchases } selected={ section === 'pending' }>
+					{ i18n.translate( 'Pending Purchases' ) }
 				</NavItem>
 
 				{ config.isEnabled( 'memberships' ) && (

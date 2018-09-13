@@ -10,6 +10,7 @@ import page from 'page';
  * Internal Dependencies
  */
 import * as billingController from 'me/billing-history/controller';
+import * as pendingController from 'me/pending-purchases/controller';
 import * as membershipsController from 'me/memberships/controller';
 import * as controller from './controller';
 import * as paths from './paths';
@@ -37,6 +38,15 @@ export default function( router ) {
 		redirectLoggedOut,
 		sidebar,
 		billingController.billingHistory,
+		makeLayout,
+		clientRender
+	);
+
+	router(
+		paths.pendingPurchases,
+		redirectLoggedOut,
+		sidebar,
+		pendingController.pendingPurchases,
 		makeLayout,
 		clientRender
 	);
