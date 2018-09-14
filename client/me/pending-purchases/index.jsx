@@ -13,71 +13,54 @@ import { localize } from 'i18n-calypso';
  */
 import CompactCard from 'components/card';
 import EmptyContent from 'components/empty-content';
-import isBusinessPlanUser from 'state/selectors/is-business-plan-user';
 import Main from 'components/main';
 import MeSidebarNavigation from 'me/sidebar-navigation';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
+import PendingPurchase from './pending-purchase';
 import PurchasesHeader from '../purchases/purchases-list/header';
 import PurchasesSite from '../purchases/purchases-site';
-import QueryUserPurchases from 'components/data/query-user-purchases';
 import { getCurrentUserId } from 'state/current-user/selectors';
-import { getPurchasesBySite } from 'lib/purchases';
-import getSites from 'state/selectors/get-sites';
-
-import { recordTracksEvent } from 'state/analytics/actions';
+import { getHttpData, requestHttpData } from 'state/data-layer/http-data';
+import { http } from 'state/data-layer/wpcom-http/actions';
 
 class PendingPurchases extends Component {
-	isDataLoading() {
-		if ( this.props.isFetchingUserPurchases && ! this.props.hasLoadedPendingPurchasesFromServer ) {
-			return true;
-		}
-
-		return ! this.props.sites.length;
-	}
+	componentDidMount = () => {
+		requestPendingPurchases( this.props.userId );
+	};
 
 	render() {
+		const { loaded, fetching, pending, translate } = this.props;
+
 		let content;
 
-		if ( this.isDataLoading() ) {
+		if ( fetching ) {
 			content = <PurchasesSite isPlaceholder />;
-		}
-
-		if ( this.props.hasLoadedPendingPurchasesFromServer && this.props.purchases.length ) {
-			content = (
-				<div>
-					{ getPurchasesBySite( this.props.purchases, this.props.sites ).map( site => (
-						<PurchasesSite
-							key={ site.id }
-							siteId={ site.id }
-							name={ site.name }
-							domain={ site.domain }
-							slug={ site.slug }
-							purchases={ site.purchases }
-						/>
-					) ) }
-				</div>
-			);
-		}
-
-		if ( this.props.hasLoadedPendingPurchasesFromServer && ! this.props.purchases.length ) {
+		} else if ( loaded && ! pending.length ) {
 			content = (
 				<CompactCard className="pending-purchases__no-content">
 					<EmptyContent
-						title={ this.props.translate( 'Looking to upgrade?' ) }
-						line={ this.props.translate(
+						title={ translate( 'Looking to upgrade?' ) }
+						line={ translate(
 							'Our plans give your site the power to thrive. ' + 'Find the plan that works for you.'
 						) }
-						action={ this.props.translate( 'Upgrade Now' ) }
+						action={ translate( 'Upgrade Now' ) }
 						actionURL={ '/plans' }
 						illustration={ '/calypso/images/illustrations/illustration-nosites.svg' }
 					/>
 				</CompactCard>
 			);
+		} else if ( loaded && pending.length ) {
+			content = (
+				<div>
+					{ pending.map( purchase => (
+						<PendingPurchase key={ purchase.siteId } purchase={ purchase } />
+					) ) }
+				</div>
+			);
 		}
 
 		return (
 			<Main className="pending-purchases">
-				<QueryUserPurchases userId={ this.props.userId } />
 				<PageViewTracker path="/me/purchases/pending" title="Pending Purchases" />
 				<MeSidebarNavigation />
 				<PurchasesHeader section="pending" />
@@ -88,25 +71,44 @@ class PendingPurchases extends Component {
 }
 
 PendingPurchases.propTypes = {
-	purchases: PropTypes.array.isRequired,
-	fetching: PropTypes.bool.isRequired,
-	loaded: PropTypes.bool.isRequired,
+	userId: PropTypes.number.isRequired,
+	pendingPurchases: PropTypes.array.isRequired,
+	uninitialized: PropTypes.bool,
+	pending: PropTypes.bool,
+	sucess: PropTypes.bool,
+	failure: PropTypes.bool,
 	error: PropTypes.object,
 };
 
 // export const getPendingPurchase = ( state, siteId ) =>
 // 	state.pendingPurchases.find( purchase => purchase.siteId === siteId );
 
+export const requestId = userId => `pending-purchases/${ userId }`;
+
+export const requestPendingPurchases = userId => {
+	return requestHttpData(
+		requestId( userId ),
+		http( {
+			path: '/me/purchases/pending',
+			apiVersion: '1.1',
+			method: 'POST',
+			body: { userId },
+		} ),
+		{
+			fromApi: () => purchases => [ [ requestId( userId ), purchases ] ],
+			freshness: -Infinity,
+		}
+	);
+};
+
 export default connect( state => {
-	const {
-		pendingPurchases: { list, fetching, loaded, error },
-	} = state;
+	const userId = getCurrentUserId( state );
+	const response = getHttpData( requestId( userId ) );
 
 	return {
-		list,
-		fetching,
-		loaded,
-		error,
-		sites: getSites( state ),
+		userId,
+		pendingPurchases: response.data || [],
+		[ response.state ]: true,
+		error: response.error,
 	};
 } )( localize( PendingPurchases ) );
