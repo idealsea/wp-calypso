@@ -41,12 +41,14 @@ class ImportURLStepComponent extends Component {
 	}
 
 	handleAction = importUrl => {
+		const { siteDetails } = this.props;
+
 		event.preventDefault();
-		debug( { importUrl } );
+		debug( { importUrl, siteDetails } );
 
 		SignupActions.submitSignupStep( { stepName: this.props.stepName }, [], {
-			importFromService: 'wix', // @TODO pull this out of the siteDetails
 			importUrl,
+			importSiteDetails: siteDetails,
 			themeSlugWithRepo: 'pub/radcliffe-2',
 		} );
 
