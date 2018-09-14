@@ -88,12 +88,12 @@ class SiteSettingsImport extends Component {
 	state = getImporterState();
 
 	componentDidMount() {
-		const { fromSite, service, site } = this.props;
+		const { fromSite, engine, site } = this.props;
 
 		ImporterStore.on( 'change', this.updateState );
 
-		debug( { fromSite, service, site } );
-		if ( 'wix' === service ) {
+		debug( { fromSite, engine, site } );
+		if ( 'wix' === engine ) {
 			this.props.startImport( site.ID, 'wix' );
 			debug( 'kick it off' );
 		}
