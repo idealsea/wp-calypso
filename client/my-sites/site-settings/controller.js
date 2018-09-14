@@ -89,6 +89,7 @@ const controller = {
 			<AsyncLoad
 				require="my-sites/site-settings/section-import"
 				fromSite={ get( context, 'query.from-site' ) }
+				service={ get( context, 'params.service' ) }
 			/>
 		);
 		next();

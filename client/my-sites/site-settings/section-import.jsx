@@ -24,7 +24,7 @@ import MediumImporter from 'my-sites/importer/importer-medium';
 import BloggerImporter from 'my-sites/importer/importer-blogger';
 import SiteImporter from 'my-sites/importer/importer-site-importer';
 import SquarespaceImporter from 'my-sites/importer/importer-squarespace';
-import { fetchState } from 'lib/importer/actions';
+import { fetchState, startImport } from 'lib/importer/actions';
 import {
 	appStates,
 	WORDPRESS,
@@ -88,11 +88,15 @@ class SiteSettingsImport extends Component {
 	state = getImporterState();
 
 	componentDidMount() {
-		const { fromSite } = this.props;
+		const { fromSite, service, site } = this.props;
 
 		ImporterStore.on( 'change', this.updateState );
-		debug( { fromSite } );
-		// @TODO if fromSite & not importing... dispatch event to kick off an import
+
+		debug( { fromSite, service, site } );
+		if ( 'wix' === service ) {
+			this.props.startImport( site.ID, 'wix' );
+			debug( 'kick it off' );
+		}
 		this.updateFromAPI();
 	}
 
@@ -275,7 +279,10 @@ class SiteSettingsImport extends Component {
 	}
 }
 
-export default connect( state => ( {
-	site: getSelectedSite( state ),
-	siteSlug: getSelectedSiteSlug( state ),
-} ) )( localize( SiteSettingsImport ) );
+export default connect(
+	state => ( {
+		site: getSelectedSite( state ),
+		siteSlug: getSelectedSiteSlug( state ),
+	} ),
+	{ startImport }
+)( localize( SiteSettingsImport ) );

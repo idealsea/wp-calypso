@@ -28,7 +28,7 @@ export default function() {
 	);
 
 	page(
-		'/settings/import/:site_id',
+		'/settings/import/:site_id/:service?',
 		siteSelection,
 		navigation,
 		controller.importSite,
