@@ -274,8 +274,9 @@ export function generateFlows( { getSiteDestination = noop, getPostsDestination 
 	if ( config.isEnabled( 'signup/import-landing-handler' ) ) {
 		flows[ 'from-site' ] = {
 			steps: [ 'import-from-url', 'user', 'domains' ],
-			destination: ( { importUrl, siteSlug } ) =>
+			destination: ( { importUrl, importFromService, siteSlug } ) =>
 				`/settings/import/${ siteSlug }` +
+				( importFromService ? `/${ importFromService }` : '' ) +
 				( importUrl ? `?from-site=${ encodeURIComponent( importUrl ) }` : '' ),
 			description: 'A flow to kick off an import during signup',
 			disallowResume: true,

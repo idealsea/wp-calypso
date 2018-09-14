@@ -45,6 +45,7 @@ class ImportURLStepComponent extends Component {
 		debug( { importUrl } );
 
 		SignupActions.submitSignupStep( { stepName: this.props.stepName }, [], {
+			importFromService: 'wix', // @TODO pull this out of the siteDetails
 			importUrl,
 			themeSlugWithRepo: 'pub/radcliffe-2',
 		} );
@@ -65,7 +66,8 @@ class ImportURLStepComponent extends Component {
 	debouncedFetchIsSiteImportable = debounce( this.fetchIsSiteImportable, DEBOUNCE_CHECK_INTERVAL );
 
 	renderContent = () => {
-		const { isInputDisabled, urlInputValue, translate } = this.props;
+		const { isInputDisabled, siteDetails, translate, urlInputValue } = this.props;
+		debug( { siteDetails } );
 
 		return (
 			<div className="import-url__wrapper">
