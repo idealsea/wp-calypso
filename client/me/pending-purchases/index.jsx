@@ -11,7 +11,6 @@ import { localize } from 'i18n-calypso';
 /**
  * Internal Dependencies
  */
-import ActionCard from 'components/action-card';
 import CompactCard from 'components/card';
 import EmptyContent from 'components/empty-content';
 import isBusinessPlanUser from 'state/selectors/is-business-plan-user';
@@ -24,16 +23,12 @@ import QueryUserPurchases from 'components/data/query-user-purchases';
 import { getCurrentUserId } from 'state/current-user/selectors';
 import { getPurchasesBySite } from 'lib/purchases';
 import getSites from 'state/selectors/get-sites';
-import {
-	getUserPurchases,
-	hasLoadedUserPurchasesFromServer,
-	isFetchingUserPurchases,
-} from 'state/purchases/selectors';
+
 import { recordTracksEvent } from 'state/analytics/actions';
 
 class PendingPurchases extends Component {
 	isDataLoading() {
-		if ( this.props.isFetchingUserPurchases && ! this.props.hasLoadedUserPurchasesFromServer ) {
+		if ( this.props.isFetchingUserPurchases && ! this.props.hasLoadedPendingPurchasesFromServer ) {
 			return true;
 		}
 
@@ -47,7 +42,7 @@ class PendingPurchases extends Component {
 			content = <PurchasesSite isPlaceholder />;
 		}
 
-		if ( this.props.hasLoadedUserPurchasesFromServer && this.props.purchases.length ) {
+		if ( this.props.hasLoadedPendingPurchasesFromServer && this.props.purchases.length ) {
 			content = (
 				<div>
 					{ getPurchasesBySite( this.props.purchases, this.props.sites ).map( site => (
@@ -64,7 +59,7 @@ class PendingPurchases extends Component {
 			);
 		}
 
-		if ( this.props.hasLoadedUserPurchasesFromServer && ! this.props.purchases.length ) {
+		if ( this.props.hasLoadedPendingPurchasesFromServer && ! this.props.purchases.length ) {
 			content = (
 				<CompactCard className="pending-purchases__no-content">
 					<EmptyContent
@@ -93,24 +88,25 @@ class PendingPurchases extends Component {
 }
 
 PendingPurchases.propTypes = {
-	isBusinessPlanUser: PropTypes.bool.isRequired,
-	noticeType: PropTypes.string,
-	purchases: PropTypes.oneOfType( [ PropTypes.array, PropTypes.bool ] ),
-	sites: PropTypes.array.isRequired,
-	userId: PropTypes.number.isRequired,
+	purchases: PropTypes.array.isRequired,
+	fetching: PropTypes.bool.isRequired,
+	loaded: PropTypes.bool.isRequired,
+	error: PropTypes.object,
 };
 
-export default connect(
-	state => {
-		const userId = getCurrentUserId( state );
-		return {
-			hasLoadedUserPurchasesFromServer: hasLoadedUserPurchasesFromServer( state ),
-			isBusinessPlanUser: isBusinessPlanUser( state ),
-			isFetchingUserPurchases: isFetchingUserPurchases( state ),
-			purchases: getUserPurchases( state, userId ),
-			sites: getSites( state ),
-			userId,
-		};
-	},
-	{ recordTracksEvent }
-)( localize( PendingPurchases ) );
+// export const getPendingPurchase = ( state, siteId ) =>
+// 	state.pendingPurchases.find( purchase => purchase.siteId === siteId );
+
+export default connect( state => {
+	const {
+		pendingPurchases: { list, fetching, loaded, error },
+	} = state;
+
+	return {
+		list,
+		fetching,
+		loaded,
+		error,
+		sites: getSites( state ),
+	};
+} )( localize( PendingPurchases ) );
