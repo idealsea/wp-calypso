@@ -48,9 +48,14 @@ export const fetchPendingPurchases = userId => dispatch => {
 		} );
 };
 
-export const removePurchase = ( purchaseId, userId ) => dispatch => {
+export const removePendingPurchase = siteId => dispatch => {
+	dispatch( {
+		type: PENDING_PURCHASE_REMOVE,
+		siteId,
+	} );
+
 	return new Promise( ( resolve, reject ) => {
-		wpcom.me().deletePendingPurchase( purchaseId, ( error, data ) => {
+		wpcom.me().deletePendingPurchase( siteId, ( error, data ) => {
 			error ? reject( error ) : resolve( data );
 		} );
 	} )
@@ -58,7 +63,7 @@ export const removePurchase = ( purchaseId, userId ) => dispatch => {
 			dispatch( {
 				type: PENDING_PURCHASE_REMOVE_COMPLETED,
 				purchases: data.purchases,
-				userId,
+				siteId,
 			} );
 		} )
 		.catch( error => {
