@@ -25,9 +25,10 @@ class QuerySiteStats extends Component {
 
 	componentDidUpdate( prevProps ) {
 		if (
-			this.props.siteId === prevProps.siteId &&
-			this.props.statType === prevProps.statType &&
-			shallowEqual( this.props.query, prevProps.query )
+			this.props.ignoreUpdate ||
+			( this.props.siteId === prevProps.siteId &&
+				this.props.statType === prevProps.statType &&
+				shallowEqual( this.props.query, prevProps.query ) )
 		) {
 			return;
 		}

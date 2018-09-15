@@ -3,8 +3,8 @@
 /**
  * External dependencies
  */
-
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { find, flowRight } from 'lodash';
 import { connect } from 'react-redux';
@@ -26,51 +26,48 @@ import {
 	getSiteStatsNormalizedData,
 } from 'state/stats/lists/selectors';
 import { recordGoogleEvent } from 'state/analytics/actions';
-import { rangeOfPeriod } from 'state/stats/lists/utils';
 import { getSiteOption } from 'state/sites/selectors';
+import { formatDate, mergeQueryResults, generateQueries, getQueryDate } from './utility';
 
 class StatModuleChartTabs extends Component {
-	constructor( props ) {
-		super( props );
-		const activeTab = this.getActiveTab();
-		const activeCharts = activeTab.legendOptions ? activeTab.legendOptions.slice() : [];
-		this.state = {
-			activeLegendCharts: activeCharts,
-			activeTab: activeTab,
-		};
+	static propTypes = {
+		data: PropTypes.arrayOf(
+			PropTypes.shape( {
+				comments: PropTypes.number,
+				labelDay: PropTypes.string,
+				likes: PropTypes.number,
+				period: PropTypes.string,
+				posts: PropTypes.number,
+				visitors: PropTypes.number,
+				visits: PropTypes.number,
+			} )
+		),
+		isActiveTabLoading: PropTypes.bool,
+	};
+
+	state = {
+		activeLegendCharts: null,
+		activeTab: null,
+	};
+
+	static getDerivedStateFromProps( props, state ) {
+		const activeTab = StatModuleChartTabs.getActiveTab( props );
+		const activeLegendCharts = activeTab.legendOptions ? activeTab.legendOptions.slice() : [];
+
+		if ( activeTab !== state.activeTab ) {
+			return { activeLegendCharts, activeTab };
+		}
+		return null;
 	}
 
-	componentWillReceiveProps( nextProps ) {
-		const activeTab = this.getActiveTab( nextProps );
-		const activeCharts = activeTab.legendOptions ? activeTab.legendOptions.slice() : [];
-		if ( activeTab !== this.state.activeTab ) {
-			this.setState( {
-				activeLegendCharts: activeCharts,
-				activeTab: activeTab,
-			} );
-		}
+	static getActiveTab( props ) {
+		return find( props.charts, { attr: props.chartTab } ) || props.charts[ 0 ];
 	}
 
 	buildTooltipData( item ) {
 		const tooltipData = [];
-		const date = this.props.moment( item.data.period );
 
-		let dateLabel;
-		switch ( this.props.period.period ) {
-			case 'day':
-				dateLabel = date.format( 'LL' );
-				break;
-			case 'week':
-				dateLabel = date.format( 'L' ) + ' - ' + date.add( 6, 'days' ).format( 'L' );
-				break;
-			case 'month':
-				dateLabel = date.format( 'MMMM YYYY' );
-				break;
-			case 'year':
-				dateLabel = date.format( 'YYYY' );
-				break;
-		}
-
+		const dateLabel = formatDate( item.data.period, this.props.period.period );
 		tooltipData.push( {
 			label: dateLabel,
 			className: 'is-date-label',
@@ -117,32 +114,12 @@ class StatModuleChartTabs extends Component {
 				} );
 
 				if ( item.data.post_titles && item.data.post_titles.length ) {
-					// only show two post titles
-					if ( item.data.post_titles.length > 2 ) {
-						tooltipData.push( {
-							label: this.props.translate( 'Posts Published' ),
-							value: this.props.numberFormat( item.data.post_titles.length ),
-							className: 'is-published-nolist',
-							icon: 'posts',
-						} );
-					} else {
-						tooltipData.push( {
-							label:
-								this.props.translate( 'Post Published', 'Posts Published', {
-									textOnly: true,
-									count: item.data.post_titles.length,
-								} ) + ':',
-							className: 'is-published',
-							icon: 'posts',
-							value: '',
-						} );
-						item.data.post_titles.forEach( post_title => {
-							tooltipData.push( {
-								className: 'is-published-item',
-								label: post_title,
-							} );
-						} );
-					}
+					tooltipData.push( {
+						label: this.props.translate( 'Posts Published' ),
+						value: this.props.numberFormat( item.data.post_titles.length ),
+						className: 'is-published-nolist',
+						icon: 'posts',
+					} );
 				}
 				break;
 		}
@@ -170,18 +147,8 @@ class StatModuleChartTabs extends Component {
 		} );
 	};
 
-	getActiveTab( nextProps ) {
-		const props = nextProps || this.props;
-		return find( props.charts, { attr: props.chartTab } ) || props.charts[ 0 ];
-	}
-
-	getLoadedData() {
-		const { quickQueryData, fullQueryData, fullQueryRequesting } = this.props;
-		return fullQueryRequesting ? quickQueryData : fullQueryData;
-	}
-
 	buildChartData() {
-		const data = this.getLoadedData();
+		const { data } = this.props;
 		if ( ! data ) {
 			return [];
 		}
@@ -220,120 +187,97 @@ class StatModuleChartTabs extends Component {
 	}
 
 	render() {
-		const { fullQuery, quickQuery, quickQueryRequesting, fullQueryRequesting, siteId } = this.props;
-		const chartData = this.buildChartData();
-		const activeTab = this.getActiveTab();
-		let availableCharts = [];
-		const data = this.getLoadedData();
-		const activeTabLoading =
-			quickQueryRequesting && fullQueryRequesting && ! ( data && data.length );
-		const classes = [
-			'stats-module',
-			'is-chart-tabs',
-			{
-				'is-loading': activeTabLoading,
-			},
-		];
-		if ( activeTab.legendOptions ) {
-			availableCharts = activeTab.legendOptions;
-		}
+		const { data, supplementalQuery, query, siteId, isActiveTabLoading } = this.props;
 
 		return (
-			<div>
+			<Card
+				className={ classNames( [
+					'stats-module',
+					'is-chart-tabs',
+					{ 'is-loading': isActiveTabLoading },
+				] ) }
+			>
+				{ siteId && <QuerySiteStats statType="statsVisits" siteId={ siteId } query={ query } /> }
 				{ siteId && (
-					<QuerySiteStats statType="statsVisits" siteId={ siteId } query={ quickQuery } />
+					// TODO: Fix bug where all supplemental query data is wiped out on clicking visitors tab...
+					// IDEA: Four independent ignoreUpdate queries? Queries for likes are the slowest.
+					<QuerySiteStats
+						statType="statsVisits"
+						siteId={ siteId }
+						query={ supplementalQuery }
+						ignoreUpdate
+					/>
 				) }
-				{ siteId && (
-					<QuerySiteStats statType="statsVisits" siteId={ siteId } query={ fullQuery } />
-				) }
-				<Card className={ classNames( ...classes ) }>
-					<Legend
-						tabs={ this.props.charts }
-						activeTab={ activeTab }
-						availableCharts={ availableCharts }
-						activeCharts={ this.state.activeLegendCharts }
-						clickHandler={ this.onLegendClick }
-					/>
-					<StatsModulePlaceholder className="is-chart" isLoading={ activeTabLoading } />
-					<ElementChart
-						loading={ activeTabLoading }
-						data={ chartData }
-						barClick={ this.props.barClick }
-					/>
-					<StatTabs
-						data={ data }
-						tabs={ this.props.charts }
-						switchTab={ this.props.switchTab }
-						selectedTab={ this.props.chartTab }
-						activeIndex={ this.props.queryDate }
-						activeKey="period"
-					/>
-				</Card>
-			</div>
+				<Legend
+					tabs={ this.props.charts }
+					activeTab={ StatModuleChartTabs.getActiveTab( this.props ) }
+					availableCharts={ this.state.activeLegendCharts }
+					activeCharts={ this.state.activeLegendCharts }
+					clickHandler={ this.onLegendClick }
+				/>
+				<StatsModulePlaceholder className="is-chart" isLoading={ isActiveTabLoading } />
+				<ElementChart
+					loading={ isActiveTabLoading }
+					data={ this.buildChartData() }
+					barClick={ this.props.barClick }
+				/>
+				<StatTabs
+					data={ data }
+					tabs={ this.props.charts }
+					switchTab={ this.props.switchTab }
+					selectedTab={ this.props.chartTab }
+					activeIndex={ this.props.queryDate }
+					activeKey="period"
+				/>
+			</Card>
 		);
 	}
 }
 
 const connectComponent = connect(
-	( state, { moment, period: periodObject, chartTab, queryDate } ) => {
+	( state, { period: { period }, chartTab, queryDate } ) => {
 		const siteId = getSelectedSiteId( state );
-		const { period } = periodObject;
+		if ( ! siteId ) {
+			return { siteId, data: [] };
+		}
+
+		const quantity = 'year' === period ? 10 : 30;
 		const timezoneOffset = getSiteOption( state, siteId, 'gmt_offset' ) || 0;
-		const momentSiteZone = moment().utcOffset( timezoneOffset );
-		let date = rangeOfPeriod( period, momentSiteZone.locale( 'en' ) ).endOf;
+		const date = getQueryDate( queryDate, timezoneOffset, period, quantity );
+		const { query, supplementalQuery } = generateQueries( period, date, quantity, chartTab );
 
-		let quantity = 30;
-		switch ( period ) {
-			case 'year':
-				quantity = 10;
-				break;
-		}
-		const periodDifference = moment( date ).diff( moment( queryDate ), period );
-		if ( periodDifference >= quantity ) {
-			date = moment( date )
-				.subtract( Math.floor( periodDifference / quantity ) * quantity, period )
-				.format( 'YYYY-MM-DD' );
-		}
+		const queryData = getSiteStatsNormalizedData( state, siteId, 'statsVisits', query );
+		const queryRequesting = isRequestingSiteStatsForQuery( state, siteId, 'statsVisits', query );
 
-		let quickQueryFields = chartTab;
-		// If we are on the default Tab, grab visitors too
-		if ( 'views' === quickQueryFields ) {
-			quickQueryFields = 'views,visitors';
-		}
+		const supplementalData = getSiteStatsNormalizedData(
+			state,
+			siteId,
+			'statsVisits',
+			supplementalQuery
+		);
+		const supplementalQueryRequesting = isRequestingSiteStatsForQuery(
+			state,
+			siteId,
+			'statsVisits',
+			supplementalQuery
+		);
 
-		const query = {
-			unit: period,
-			date,
-			quantity,
-		};
-		const quickQuery = {
-			...query,
-			stat_fields: quickQueryFields,
-		};
-		const fullQuery = {
-			...query,
-			stat_fields: 'views,visitors,likes,comments,post_titles',
-		};
+		const data = supplementalQueryRequesting
+			? queryData
+			: mergeQueryResults( [ queryData, supplementalData ] );
 
 		return {
-			quickQueryRequesting: isRequestingSiteStatsForQuery(
-				state,
-				siteId,
-				'statsVisits',
-				quickQuery
-			),
-			quickQueryData: getSiteStatsNormalizedData( state, siteId, 'statsVisits', quickQuery ),
-			fullQueryRequesting: isRequestingSiteStatsForQuery( state, siteId, 'statsVisits', fullQuery ),
-			fullQueryData: getSiteStatsNormalizedData( state, siteId, 'statsVisits', fullQuery ),
-			quickQuery,
-			fullQuery,
+			data,
+			supplementalQuery,
+			isActiveTabLoading: queryRequesting && ! ( data && data.length ),
+			query,
 			siteId,
 		};
 	},
 	{ recordGoogleEvent },
 	null,
 	{
-		areStatePropsEqual: compareProps( { deep: [ 'quickQuery', 'fullQuery' ] } ),
+		areStatePropsEqual: compareProps( { deep: [ 'data' ] } ),
 	}
 );
 
