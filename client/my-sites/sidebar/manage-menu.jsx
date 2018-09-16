@@ -149,12 +149,12 @@ class ManageMenu extends PureComponent {
 
 		return {
 			name: 'import',
-			label: translate( 'Import' ),
+			label: translate( 'Marketing' ),
 			capability: 'manage_options',
 			queryable: ! isJetpack,
 			config: 'manage/import-in-sidebar',
-			link: '/settings/import', // @TODO make it a top level section & add a redirect
-			paths: [ '/settings/import' ],
+			link: '/marketing', // @TODO make it a top level section & add a redirect
+			paths: [ '/marketing' ],
 			wpAdminLink: 'import.php',
 			showOnAllMySites: false,
 			forceInternalLink: ! isJetpack,
@@ -215,7 +215,7 @@ class ManageMenu extends PureComponent {
 				icon = 'pages';
 				break;
 			case 'import':
-				icon = 'cloud-upload';
+				icon = 'speaker';
 				break;
 			case 'jetpack-portfolio':
 				icon = 'folder';

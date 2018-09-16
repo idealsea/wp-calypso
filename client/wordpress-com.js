@@ -284,6 +284,15 @@ const sections = [
 		secondary: true,
 		css: 'feature-upsell',
 	},
+	{
+		name: 'marketing',
+		paths: [ '/marketing' ],
+		module: 'my-sites/marketing',
+		enableLoggedOut: true,
+		secondary: true,
+		group: 'sites',
+		css: 'marketing',
+	},
 ];
 
 sections.push( {
