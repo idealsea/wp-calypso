@@ -23,6 +23,7 @@ import {
 	times,
 } from 'lodash';
 import page from 'page';
+import { v4 as uuid } from 'uuid';
 import { stringify } from 'qs';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
@@ -148,7 +149,7 @@ class RegisterDomainStep extends React.Component {
 		this._isMounted = false;
 		this.state = this.getState();
 		if ( props.initialState ) {
-			this.state = { ...props.initialState, railcarSeed: this.getNewRailcarSeed() };
+			this.state = { ...props.initialState, railcarId: this.getNewRailcarId() };
 
 			if (
 				this.state.lastSurveyVertical &&
@@ -205,13 +206,6 @@ class RegisterDomainStep extends React.Component {
 		};
 	}
 
-	getNewRailcarSeed() {
-		// Generate a 7 character random hash on base16. E.g. ac618a3
-		return Math.floor( ( 1 + Math.random() ) * 0x10000000 )
-			.toString( 16 )
-			.substring( 1 );
-	}
-
 	UNSAFE_componentWillReceiveProps( nextProps ) {
 		// Reset state on site change
 		if (
@@ -266,6 +260,10 @@ class RegisterDomainStep extends React.Component {
 		) {
 			this.focusSearchCard();
 		}
+	}
+
+	getNewRailcarId() {
+		return `${ uuid().replace( /-/g, '' ) }-domain-suggestion`;
 	}
 
 	focusSearchCard = () => {
@@ -821,7 +819,7 @@ class RegisterDomainStep extends React.Component {
 			this.props.recordSearchFormSubmit
 		);
 
-		this.setState( { lastDomainSearched: domain, railcarSeed: this.getNewRailcarSeed() }, () => {
+		this.setState( { lastDomainSearched: domain, railcarId: this.getNewRailcarId() }, () => {
 			const timestamp = Date.now();
 
 			this.getAvailableTlds( domain, this.props.vendor );
@@ -973,7 +971,7 @@ class RegisterDomainStep extends React.Component {
 				offerUnavailableOption={ this.props.offerUnavailableOption }
 				placeholderQuantity={ PAGE_SIZE }
 				isSignupStep={ this.props.isSignupStep }
-				railcarSeed={ this.state.railcarSeed }
+				railcarId={ this.state.railcarId }
 				fetchAlgo={ `${ this.props.vendor }/v1` }
 				cart={ this.props.cart }
 			>

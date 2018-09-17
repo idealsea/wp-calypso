@@ -52,7 +52,7 @@ class DomainSearchResults extends React.Component {
 		onClickTransfer: PropTypes.func,
 		onClickUseYourDomain: PropTypes.func,
 		isSignupStep: PropTypes.bool,
-		railcarSeed: PropTypes.string,
+		railcarId: PropTypes.string,
 		fetchAlgo: PropTypes.string,
 	};
 
@@ -230,7 +230,7 @@ class DomainSearchResults extends React.Component {
 					onButtonClick={ this.props.onClickResult }
 					primarySuggestion={ first( bestMatchSuggestions ) }
 					query={ this.props.lastDomainSearched }
-					railcarSeed={ this.props.railcarSeed }
+					railcarId={ this.props.railcarId }
 					secondarySuggestion={ first( bestAlternativeSuggestions ) }
 					selectedSite={ this.props.selectedSite }
 				/>
@@ -249,7 +249,7 @@ class DomainSearchResults extends React.Component {
 						isSignupStep={ this.props.isSignupStep }
 						selectedSite={ this.props.selectedSite }
 						domainsWithPlansOnly={ this.props.domainsWithPlansOnly }
-						railcarId={ `${ this.props.railcarSeed }-registration-suggestion-${ i + 2 }` }
+						railcarId={ this.props.railcarId }
 						uiPosition={ i + 2 }
 						fetchAlgo={
 							endsWith( suggestion.domain_name, '.wordpress.com' ) ? 'wpcom' : this.props.fetchAlgo
