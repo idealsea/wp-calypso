@@ -59,6 +59,36 @@ export class ActionTypeSelector extends Component {
 	isSelected = ( selection, key ) =>
 		selection && !! selection.length && indexOf( selection, key ) >= 0;
 
+	renderSelection = ( checkboxes, totalCount ) => {
+		const { translate, actionTypes, onToggleAllCheckboxes } = this.props;
+		return (
+			<div className="filterbar__activity-types-selection-wrap">
+				{ actionTypes &&
+					!! checkboxes.length && (
+						<Fragment>
+							<FormLabel>
+								<FormCheckbox
+									id="comment_like_notification"
+									onChange={ onToggleAllCheckboxes.bind( this, checkboxes ) }
+									checked={ this.isAllCheckboxSelected( checkboxes ) }
+									name="comment_like_notification"
+								/>
+								<strong>
+									{ translate( 'All activity type (%(totalCount)d)', {
+										args: { totalCount },
+									} ) }
+								</strong>
+							</FormLabel>
+							<div className="filterbar__activity-types-selection-granular">
+								{ checkboxes.map( this.renderCheckbox.bind( null, checkboxes ) ) }
+							</div>
+						</Fragment>
+					) }
+				{ ! actionTypes && [ 1, 2, 3 ].map( this.renderPlaceholder ) }
+			</div>
+		);
+	};
+
 	render() {
 		const {
 			translate,
@@ -68,7 +98,6 @@ export class ActionTypeSelector extends Component {
 			onButtonClick,
 			selected,
 			onResetSelection,
-			onToggleAllCheckboxes,
 		} = this.props;
 		const checkboxes = [];
 		const selectedNames = [];
@@ -125,31 +154,11 @@ export class ActionTypeSelector extends Component {
 					autoPosition={ true }
 					context={ this.activityTypeButton.current }
 				>
-					<div className="filterbar__activity-types-selection-wrap">
-						{ actionTypes &&
-							!! checkboxes.length && (
-								<Fragment>
-									<FormLabel>
-										<FormCheckbox
-											id="comment_like_notification"
-											onChange={ onToggleAllCheckboxes.bind( this, checkboxes ) }
-											checked={ this.isAllCheckboxSelected( checkboxes ) }
-											name="comment_like_notification"
-										/>
-										<strong>
-											{ translate( 'All activity type (%(totalCount)d)', {
-												args: { totalCount },
-											} ) }
-										</strong>
-									</FormLabel>
-									<div className="filterbar__activity-types-selection-granular">
-										{ checkboxes.map( this.renderCheckbox.bind( null, checkboxes ) ) }
-									</div>
-								</Fragment>
-							) }
-						{ ! actionTypes && [ 1, 2, 3 ].map( this.renderPlaceholder ) }
-					</div>
+					{ this.renderSelection( checkboxes, totalCount ) }
 				</Popover>
+				<div className="filterbar__activity-types-mobile-wrap">
+					{ this.renderSelection( checkboxes, totalCount ) }
+				</div>
 			</Fragment>
 		);
 	}
