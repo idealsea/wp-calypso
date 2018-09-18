@@ -3,6 +3,7 @@
  * External dependencies
  */
 import React, { Component, Fragment } from 'react';
+import ReactDOM from 'react-dom';
 import classnames from 'classnames';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
@@ -13,10 +14,40 @@ import Gridicon from 'gridicons';
  * Internal dependencies
  */
 import Button from 'components/button';
+import Card from 'components/card';
 import FormCheckbox from 'components/forms/form-checkbox';
 import FormLabel from 'components/forms/form-label';
 import Popover from 'components/popover';
 import { requestActivityActionTypeCounts } from 'state/data-getters';
+import { isMobile } from 'lib/viewport';
+
+class MobileActionTypeView extends Component {
+	constructor( props ) {
+		super( props );
+		this.mobileWrapper = this.getMobileWrapper();
+	}
+	getMobileWrapper = () => {
+		return document.querySelector( '.filterbar__mobile-wrap' );
+	};
+
+	hasMobileWrapper = () => {
+		if ( this.mobileWrapper ) {
+			return true;
+		}
+		this.mobileWrapper = this.getMobileWrapper();
+		if ( this.mobileWrapper ) {
+			return true;
+		}
+		return false;
+	};
+
+	render() {
+		if ( this.props.isVisible && this.hasMobileWrapper() ) {
+			return ReactDOM.createPortal( this.props.children, this.mobileWrapper );
+		}
+		return null;
+	}
+}
 
 export class ActionTypeSelector extends Component {
 	constructor( props ) {
@@ -147,22 +178,32 @@ export class ActionTypeSelector extends Component {
 						<Gridicon icon="cross-small" />
 					</Button>
 				) }
-				<Popover
-					id="filterbar__activity-types"
-					isVisible={ isVisible }
-					onClose={ onClose }
-					autoPosition={ true }
-					context={ this.activityTypeButton.current }
-				>
-					{ this.renderSelection( checkboxes, totalCount ) }
-				</Popover>
-				<div className="filterbar__activity-types-mobile-wrap">
-					{ this.renderSelection( checkboxes, totalCount ) }
-				</div>
+				{ ! isMobile && (
+					<Popover
+						id="filterbar__activity-types"
+						isVisible={ isVisible }
+						onClose={ onClose }
+						autoPosition={ true }
+						context={ this.activityTypeButton.current }
+					>
+						{ this.renderSelection( checkboxes, totalCount ) }
+					</Popover>
+				) }
+				{
+					<MobileActionTypeView isVisible={ isVisible }>
+						<Card>
+							{ this.renderSelection( checkboxes, totalCount ) }
+							<Button onClick={ onClose } primary>
+								{ translate( 'Apply' ) }
+							</Button>
+						</Card>
+					</MobileActionTypeView>
+				}
 			</Fragment>
 		);
 	}
 }
+
 const mapStateToProps = ( state, { siteId, filter } ) => {
 	const actionTypesRequest = requestActivityActionTypeCounts( siteId, filter );
 	return {
