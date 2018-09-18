@@ -254,15 +254,9 @@ class RegisterDomainStep extends React.Component {
 	}
 
 	componentDidMount() {
-		if ( this.state.lastQuery ) {
-			this.onSearch( this.state.lastQuery );
-		} else {
-			this.getAvailableTlds();
-		}
-
-		this.props.recordSearchFormView( this.props.analyticsSection );
-
 		this._isMounted = true;
+		this.getAvailableTlds();
+		this.props.recordSearchFormView( this.props.analyticsSection );
 	}
 
 	componentDidUpdate( prevProps ) {
