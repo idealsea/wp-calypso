@@ -9,7 +9,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { isEnabled } from 'config';
-import { filter, get } from 'lodash';
+import { filter, flow, get } from 'lodash';
 import debugFactory from 'debug';
 
 /**
@@ -25,6 +25,7 @@ import BloggerImporter from 'my-sites/importer/importer-blogger';
 import SiteImporter from 'my-sites/importer/importer-site-importer';
 import SquarespaceImporter from 'my-sites/importer/importer-squarespace';
 import { fetchState, startImport } from 'lib/importer/actions';
+import { connectDispatcher } from 'my-sites/importer/dispatcher-converter';
 import {
 	appStates,
 	WORDPRESS,
@@ -93,7 +94,8 @@ class SiteSettingsImport extends Component {
 		ImporterStore.on( 'change', this.updateState );
 
 		debug( { fromSite, engine, site } );
-		if ( 'wix' === engine ) {
+		if ( 'wix' === engine && site && site.ID ) {
+			// @TODO check if there's already an import
 			this.props.startImport( site.ID, 'wix' );
 			debug( 'kick it off' );
 		}
@@ -279,10 +281,14 @@ class SiteSettingsImport extends Component {
 	}
 }
 
-export default connect(
-	state => ( {
+export default flow(
+	localize,
+	connectDispatcher( null, dispatch => ( {
+		// @TODO Flux -> redux
+		startImport: ( siteId, engine ) => dispatch( startImport( siteId, engine ) ),
+	} ) ),
+	connect( state => ( {
 		site: getSelectedSite( state ),
 		siteSlug: getSelectedSiteSlug( state ),
-	} ),
-	{ startImport }
-)( localize( SiteSettingsImport ) );
+	} ) )
+)( SiteSettingsImport );
