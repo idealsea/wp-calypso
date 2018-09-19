@@ -410,7 +410,6 @@ sections.push( {
 	enableLoggedOut: true,
 	secondary: false,
 	isomorphic: true,
-	css: 'login',
 } );
 
 sections.push( {
