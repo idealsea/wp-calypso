@@ -13,6 +13,7 @@ import { localize } from 'i18n-calypso';
  */
 import CompactCard from 'components/card';
 import EmptyContent from 'components/empty-content';
+import getSites from 'state/selectors/get-sites';
 import Main from 'components/main';
 import MeSidebarNavigation from 'me/sidebar-navigation';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
@@ -22,6 +23,40 @@ import PurchasesSite from '../purchases/purchases-site';
 import { getCurrentUserId } from 'state/current-user/selectors';
 import { getHttpData, requestHttpData } from 'state/data-layer/http-data';
 import { http } from 'state/data-layer/wpcom-http/actions';
+
+export const requestId = userId => `pending-purchases/${ userId }`;
+
+export const requestPendingPurchases = userId => {
+	return requestHttpData(
+		requestId( userId ),
+		http( {
+			path: '/me/purchases/pending',
+			apiVersion: '1.1',
+			method: 'POST',
+			body: { userId },
+		} ),
+		{
+			fromApi: () => purchases => [ [ requestId( userId ), purchases ] ],
+			freshness: -Infinity,
+		}
+	);
+};
+
+export const requestShoppingCart = siteId => {
+	return requestHttpData(
+		requestId( siteId ),
+		http( {
+			path: `/me/shopping-cart/${ siteId }_redirect`,
+			apiVersion: '1.1',
+			method: 'POST',
+			body: {},
+		} ),
+		{
+			fromApi: () => carts => [ [ requestId( siteId ), carts ] ],
+			freshness: -Infinity,
+		}
+	);
+};
 
 class PendingPurchases extends Component {
 	componentDidMount = () => {
@@ -72,6 +107,7 @@ class PendingPurchases extends Component {
 
 PendingPurchases.propTypes = {
 	userId: PropTypes.number.isRequired,
+	sites: PropTypes.array.isRequired,
 	pendingPurchases: PropTypes.array.isRequired,
 	uninitialized: PropTypes.bool,
 	pending: PropTypes.bool,
@@ -80,33 +116,19 @@ PendingPurchases.propTypes = {
 	error: PropTypes.object,
 };
 
-// export const getPendingPurchase = ( state, siteId ) =>
-// 	state.pendingPurchases.find( purchase => purchase.siteId === siteId );
-
-export const requestId = userId => `pending-purchases/${ userId }`;
-
-export const requestPendingPurchases = userId => {
-	return requestHttpData(
-		requestId( userId ),
-		http( {
-			path: '/me/purchases/pending',
-			apiVersion: '1.1',
-			method: 'POST',
-			body: { userId },
-		} ),
-		{
-			fromApi: () => purchases => [ [ requestId( userId ), purchases ] ],
-			freshness: -Infinity,
-		}
-	);
-};
-
 export default connect( state => {
 	const userId = getCurrentUserId( state );
-	const response = getHttpData( requestId( userId ) );
+	const sites = getSites( state );
+
+	//const response = getHttpData( requestId( userId ) );
+
+	const response = {
+		data: [],
+	};
 
 	return {
 		userId,
+		sites,
 		pendingPurchases: response.data || [],
 		[ response.state ]: true,
 		error: response.error,
