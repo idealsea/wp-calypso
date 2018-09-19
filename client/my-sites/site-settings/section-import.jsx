@@ -96,7 +96,7 @@ class SiteSettingsImport extends Component {
 		debug( { fromSite, engine, site } );
 		if ( 'wix' === engine && site && site.ID ) {
 			// @TODO check if there's already an import
-			this.props.startImport( site.ID, 'wix' );
+			this.props.startImport( site.ID, 'importer-type-site-importer' );
 			debug( 'kick it off' );
 		}
 		this.updateFromAPI();
