@@ -22,16 +22,9 @@ import {
 	showCreditCardExpiringWarning,
 	subscribedWithinPastWeek,
 } from 'lib/purchases';
-import {
-	isDomainProduct,
-	isDomainTransfer,
-	isGoogleApps,
-	isPlan,
-	isTheme,
-} from 'lib/products-values';
+import { isDomainTransfer } from 'lib/products-values';
 import Notice from 'components/notice';
-import PlanIcon from 'components/plans/plan-icon';
-import Gridicon from 'gridicons';
+import PurchaseIcon from '../purchase-icon';
 import { managePurchase } from '../paths';
 import TrackComponentView from 'lib/analytics/track-component-view';
 
@@ -135,41 +128,6 @@ class PurchaseItem extends Component {
 		window.scrollTo( 0, 0 );
 	}
 
-	renderIcon() {
-		const { purchase } = this.props;
-
-		if ( ! purchase ) {
-			return null;
-		}
-
-		if ( isPlan( purchase ) ) {
-			return (
-				<div className="purchase-item__plan-icon">
-					<PlanIcon plan={ purchase.productSlug } />
-				</div>
-			);
-		}
-
-		let icon;
-		if ( isDomainProduct( purchase ) || isDomainTransfer( purchase ) ) {
-			icon = 'domains';
-		} else if ( isTheme( purchase ) ) {
-			icon = 'themes';
-		} else if ( isGoogleApps( purchase ) ) {
-			icon = 'mail';
-		}
-
-		if ( ! icon ) {
-			return null;
-		}
-
-		return (
-			<div className="purchase-item__plan-icon">
-				<Gridicon icon={ icon } size={ 24 } />
-			</div>
-		);
-	}
-
 	render() {
 		const { isPlaceholder, isDisconnectedSite, purchase, isJetpack } = this.props;
 		const classes = classNames(
@@ -185,7 +143,7 @@ class PurchaseItem extends Component {
 		} else {
 			content = (
 				<span className="purchase-item__wrapper">
-					{ this.renderIcon() }
+					<PurchaseIcon className="purchase-item__plan-icon" purchase={ purchase } />
 					<div className="purchase-item__details">
 						<div className="purchase-item__title">{ getName( purchase ) }</div>
 						<div className="purchase-item__purchase-type">{ purchaseType( purchase ) }</div>

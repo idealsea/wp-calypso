@@ -1,6 +1,7 @@
+/** @format */
+
 .purchase-item.card {
 	&.is-expired {
-
 		.purchase-item__plan-icon,
 		.purchase-item__title,
 		.purchase-item__purchase-type {
@@ -50,26 +51,6 @@
 	}
 }
 
-.purchase-item__plan-icon {
-	margin: 0 8px 0 0;
-	max-width: 32px;
-	width: 32px;
-
-	.gridicon {
-		padding: 4px;
-		background: $blue-medium;
-		fill: $white;
-	}
-
-	.gridicons-domains {
-		border-radius: 50%;
-	}
-
-	.gridicons-themes {
-		border-radius: 4px;
-	}
-}
-
 .purchase-item__purchase-date,
 .purchase-item__purchase-type {
 	line-height: 14px;
@@ -90,7 +71,7 @@
 		@include long-content-fade();
 	}
 
-	@include breakpoint( ">480px" ) {
+	@include breakpoint( '>480px' ) {
 		font-size: 18px;
 		max-width: none;
 	}
